@@ -1,0 +1,72 @@
+---
+title: "Análisis de varianza"
+author: "Andrés Añez Brito"
+date: "4/29/2021"
+output: html_document
+---
+El análisis de varianza es la técnica fundamental en el desarrollo de diseños de experimentos, la idea principal de está técnica es separar la varianza total entre las fuentes con las que contribuye cada fuente de variación en el experimento. (Humberto Gutierrez, 2015)
+
+La utilidad de esta técnica es transversal en todas las áreas de la ciencia, a nivel industrial su importancia radica en poder comparar diferentes métodos, procesos, maquinas, proovedores, materiales y cualquier componente que influya en el sistema de producción de nuestra empresa.
+
+Humberto Gutierrez, en su libro "Análisis y diseños de experimento" nos propone un ejemplo de una aplicación a nivel industrial, el cual consiste en lo siguiente: En una empresa de manufactura se propone un tratamiento para reducir el porcentaje de productos defectuosos. Para validar la propuesta se diseñó un experimento que se producía con o sin la propuesta de mejora. Cada corrida experimental consistió en producir un lote y la variable de respuesta es el porcentaje de producto defectuoso. Se hicieron 25 replicas para cada proceso.
+
+Se cargan los datos del modelo
+```{r}
+datos <- read.csv("/Users/andresanez/OneDrive - Universidad del Magdalena/PROYECTOS/Análisis de varianza/datos.csv", header=TRUE, sep=",")
+```
+Se convierte la variable "Porcentaje_de_PNC" en decimal
+```{r}
+datos$Porcentaje_de_PNC<- as.numeric(datos$Porcentaje_de_PNC)
+PNC <- datos$Porcentaje_de_PNC
+procesos <- datos$Proceso
+#El resúmen del dataset es el siguiente
+summary(datos)
+```
+
+El propósito del experimento es determinar si hay diferencias en los porcentajes de producto no conforme obtenidos en los dos procesos
+
+<h4>Exploración Visual</h4>
+Se realiza un box plot para explorar el comportamiento de producto no conforme por cada uno de los procesos, se puede denotar visualmente que el proceso B pareciera tener mayor incidencia en el porcentaje de producto no conforme.
+```{r}
+boxplot(PNC ~ procesos, xlab="Procesos", ylab = "Porcentaje de Producto No Conforme", col = "#4767AE")
+```
+<br>
+<h4>Modelo ANOVA</h4>
+<p>Para corrobar que el análisis visual es el correcto, se procede a realizar la prueba análitica:<p>
+```{r}
+modelo = aov(lm(PNC ~ procesos))
+summary(modelo)
+```
+<br>
+<em>Puesto el valor p (2x10^-16) obtenido es menor a un nivel de significancia de 5% se puede concluir que los procesos generan diferentes niveles de producto no conforme, siendo el Proceso A el que genera niveles más bajos para el sistema productivo.</em>
+
+<h4>Validación del Modelo</h4>
+Cada vez que se realiza un análisis de varianza es importante validar el modelo en cuanto a normalidad, independencia y homocesdaticidad.
+Para esto, se piden los residuos del modelo de la siguiente manera:
+
+```{r}
+residuos <- modelo$residuals
+```
+<br>
+<h5>Independencia</h5>
+```{r}
+plot(residuos)
+```
+<br><em>No se evidencian patrones, ni tendencias, por lo que se puede concluir que las corridas cumplen con la prueba de independencia</em>
+<h5>Normalidad</h5>
+Para evidenciar si los residuos siguen una distribución normal, se realiza un prueba de Shapiro Wilks
+```{r}
+shapiro.test(residuos)
+```
+<br>
+<em>Puesto el valor p (0,072) obtenido es mayor a un nivel de significancia de 5% no se puede rechazar la idea de que los datos provinen de una distribución normal, cumpliendo de ese modo con el presente supuesto.</em>
+<h5>Homocedasticidad</h5>
+
+```{r}
+bartlett.test(residuos ~ procesos)
+```
+<br>
+<em>Puesto el valor p (0,1279) obtenido es mayor a un nivel de significancia de 5% no se puede rechazar la idea de que los residuos presentan igualdad de varianza, cumpliendo de ese modo con el presente supuesto.</em>
+<h5>Conclusión</h5>
+De esta forma, se puede concluir que el proceso A y el proceso B presentan diferencias significativas ante la generación de producto no conforme, siendo el primero el cual mejores resultados arroja, al cumplir con los 3 supuestos se puede denotar que la prueba cumple con los estandares y el desarrollo del experimento fue idóneo.
+
